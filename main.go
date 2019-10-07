@@ -8,18 +8,20 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strings"
+	"unicode/utf8"
 )
 
 // required to translate language flags
 var (
 	// source language
-	source = flag.String("source", "en", "translate source")
+	source = flag.String("source", "", "translate source")
 	// target language
 	target = flag.String("target", "ja", "translate traget")
 	// source language text
 	text = flag.String("text", "", "translate source text")
 	// Use the Google Apps Script to translate language
-	endpoint = flag.String("endpoint", "https://script.google.com/macros/s/AKfycbywwDmlmQrNPYoxL90NCZYjoEzuzRcnRuUmFCPzEqG7VdWBAhU/exec", "translate endpoint")
+	endpoint = flag.String("endpoint", "https://script.google.com/macros/s/AKfycbzU7EjH7TAakYcypslv9qvzyRF5yGDdHBG_r3ZXMDSvzqzdYtrn/exec", "translate endpoint")
 )
 
 type post struct {
@@ -64,13 +66,34 @@ func run(args []string) int {
 		*endpoint = envEndpoint
 	}
 
-	if len(args) == 0 && *text == "" {
-		flag.Usage()
-		return -1
+	if *text == "" {
+		*text = strings.Join(args, " ")
+		if *text == "" {
+			flag.Usage()
+			return -1
+		}
 	}
 
-	if *text == "" && args[0] != "" {
-		*text = args[0]
+	if *source == "" {
+		n_en := 0
+		n_ja := 0
+		for _, char := range *text {
+			str := string([]rune{char})
+			n_byte := len(str)
+			n_rune := utf8.RuneCountInString(str)
+			if n_byte == n_rune {
+				n_en += 1
+			} else {
+				n_ja += 1
+			}
+		}
+		if n_en <= n_ja {
+			*source = "ja"
+			*target = "en"
+		} else {
+			*source = "en"
+			*target = "ja"
+		}
 	}
 
 	result, err := translate(*text, *source, *target)
