@@ -75,19 +75,22 @@ func run(args []string) int {
 	}
 
 	if *source == "" {
-		n_en := 0
-		n_ja := 0
+		nEN := 0
+		nJA := 0
 		for _, char := range *text {
 			str := string([]rune{char})
-			n_byte := len(str)
-			n_rune := utf8.RuneCountInString(str)
-			if n_byte == n_rune {
-				n_en += 1
+			if str == " " {
+				continue
+			}
+			nByte := len(str)
+			nRune := utf8.RuneCountInString(str)
+			if nByte == nRune {
+				nEN++
 			} else {
-				n_ja += 1
+				nJA++
 			}
 		}
-		if n_en <= n_ja {
+		if nEN/2 <= nJA {
 			*source = "ja"
 			*target = "en"
 		} else {
